@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging Page</title>
+    <script>
+        var isRecording = false;
+        var mediaRecorder;
+        var audioChunks = [];
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.onstart = () => {
+                        audioChunks = [];
+                        isRecording = true;
+                    };
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    mediaRecorder.onstop = () => {
+                        isRecording = false;
+                        var audioBlob = new Blob(audioChunks);
+                        var formData = new FormData();
+                        formData.append('audio_data', audioBlob, 'audio.wav');
+
+                        fetch('/speech-to-text', {
+                            method: 'POST',
+                            body: formData
+                        }).then(response => response.json())
+                        .then(data => {
+                            if (data.message) {
+                                var ul = document.getElementById('message-list');
+                                var li = document.createElement('li');
+                                li.appendChild(document.createTextNode(data.message));
+                                ul.appendChild(li);
+                            } else {
+                                alert('Error recognizing speech.');
+                            }
+                        });
+                    };
+                    mediaRecorder.start();
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+            }
+        }
+
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Simple Messaging App</h1>
+    <button onclick="toggleRecording()">Record Message</button>
+    <form action="/send" method="post">
+        <input type="text" name="message" required placeholder="Write your message here">
+        <input type="submit" value="Send">
+    </form>
+    <h2>Messages:</h2>
+    <ul id="message-list">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
