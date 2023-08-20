@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging Page</title>
+</head>
+<body>
+    <h1>Simple Messaging App</h1>
+    <form action="/send" method="post">
+        <input type="text" name="message" required placeholder="Write your message here">
+        <input type="submit" value="Send">
+    </form>
+    <h2>Messages:</h2>
+    <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
